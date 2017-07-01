@@ -1,0 +1,10 @@
+<schema>
+	<element name="USER_SPEDAY" tablename="USER_SPEDAY">
+		<field name="USERID" primary="true"/>
+		<field name="STARTSPECDAY" required="true"/>
+		<field name="ENDSPECDAY" required="true"/>
+		<field name="DATEID" required="true"/>
+		<field name="YUANYING" />
+		<field name="DATE" />
+	</element>
+</schema>
