@@ -16,11 +16,20 @@ class BTACSReconciliationService {
 	@ActiveDB(value='USER_SPEDAY', em='btacs')
 	def ems;
 
+	@ActiveDB(value='btacsreconciliation', em='tagabukid_etracs')
+	def emrec;
+
+	@ActiveDB(value='btacsreconciliationitems', em='tagabukid_etracs')
+	def emreci;
+
 	@Service("SequenceService")
 	def seqSvc;
 
 	@Service("DateService")
     def dtsvc
+
+    @Env
+	def env;
 
 	@ProxyMethod
 	public def lookupBTACSOffice( params) {
@@ -90,53 +99,81 @@ class BTACSReconciliationService {
 		return appcode+seqSvc.getNextFormattedSeries(appcode);
 	}
 
+	public def createRECN(def o) {
+		def appcode = "REC"
+		return appcode+seqSvc.getNextFormattedSeries(appcode);
+	}
+
 
 	@Async
 	@ProxyMethod
     public def processReconciliation(entity,reconciliationitems){
-    	def grouprecitem = reconciliationitems.groupBy({it.userid})
+    	def rec = [
+			objid                        : "REC"+ new UID(),
+			state                        : 'DRAFT',
+			txnno                        : createRECN(),
+			officeid                     : entity.office.DEPTID,
+			officename                   : entity.office.DEPTNAME,
+			year                         : entity.year,
+			month                        : entity.month.index,
+			recordlog_datecreated        : dtsvc.serverDate,
+			recordlog_createdbyuserid    : env.USERID,
+			recordlog_createdbyuser      : env.FULLNAME,
+			recordlog_dateoflastupdate   : dtsvc.serverDate,
+			recordlog_lastupdatedbyuserid: env.USERID,
+			recordlog_lastupdatedbyuser  : env.FULLNAME,
+    	];
+
+    	def grouprecitem = reconciliationitems.groupBy({[userid:it.userid,name:it.name,gender:it.gender,jobtitle:it.jobtitle]}).collect{k,v->
+            [
+				userid  :k.userid,
+				name    :k.name,
+				gender  :k.gender,
+				jobtitle:k.jobtitle,
+				items   :v
+            ]
+        }
     	grouprecitem.each{
-    		def reccount = em.findReconciliationCount([USERID:it.key,YAER:entity.year,MONTH:entity.month.index])
-    		println reccount
-			it.value.each{ri ->
+    		def reccount = em.findReconciliationCount([USERID:it.userid,YEAR:entity.year,MONTH:entity.month.index])
+			it.items.each{ri ->
 				switch(ri.reason){
 		            case "CHIEF LOGS":
 		               	if(!ri.DateLogin){
 				    		ri.CHECKTIME = ri.StartTime
 				    		ri.CHECKTYPE = "I"
-				    		reconcileblanklog(ri)
+				    		reconcileblanklog(rec,ri)
 				    	}
 
 				    	if(!ri.DateLogout){
 				    		ri.CHECKTIME = ri.EndTime
 				    		ri.CHECKTYPE = "O"
-				    		reconcileblanklog(ri)
+				    		reconcileblanklog(rec,ri)
 				    	}
 		            break;
 		            case "BROWNOUT":
 		                if(!ri.DateLogin){
 				    		ri.CHECKTIME = ri.StartTime
 				    		ri.CHECKTYPE = "I"
-				    		reconcileblanklog(ri)
+				    		reconcileblanklog(rec,ri)
 				    	}
 
 				    	if(!ri.DateLogout){
 				    		ri.CHECKTIME = ri.EndTime
 				    		ri.CHECKTYPE = "O"
-				    		reconcileblanklog(ri)
+				    		reconcileblanklog(rec,ri)
 				    	}
 		            break;
 		            case "CONVOCATION":
 		                if(!ri.DateLogin){
 				    		ri.CHECKTIME = ri.StartTime
 				    		ri.CHECKTYPE = "I"
-				    		reconcileblanklog(ri)
+				    		reconcileblanklog(rec,ri)
 				    	}
 
 				    	if(!ri.DateLogout){
 				    		ri.CHECKTIME = ri.EndTime
 				    		ri.CHECKTYPE = "O"
-				    		reconcileblanklog(ri)
+				    		reconcileblanklog(rec,ri)
 				    	}
 		            break;
 		            case "FORGOT TO LOG":
@@ -144,15 +181,15 @@ class BTACSReconciliationService {
 		            		ri.CHECKTYPE = "I"
 		            		if (reccount.ftlcount == 0){
 						    	ri.CHECKTIME = ri.StartTime
-						    	reconcileblanklog(ri)
+						    	reconcileblanklog(rec,ri)
 						    	reccount.ftlcount ++;
 			                }else if(reccount.ftlcount == 1){
 						    	ri.CHECKTIME = penalty(ri.StartTime,30)
-						    	reconcileblanklog(ri)
+						    	reconcileblanklog(rec,ri)
 						    	reccount.ftlcount ++;
 			                }else if(reccount.ftlcount == 2){
 						    	ri.CHECKTIME = penalty(ri.StartTime,60)
-						    	reconcileblanklog(ri)
+						    	reconcileblanklog(rec,ri)
 						    	reccount.ftlcount ++;
 			                }
 		            	}
@@ -160,15 +197,15 @@ class BTACSReconciliationService {
 		            		ri.CHECKTYPE = "O"
 		            		if (reccount.ftlcount == 0){
 						    	ri.CHECKTIME = ri.EndTime
-						    	reconcileblanklog(ri)
+						    	reconcileblanklog(rec,ri)
 						    	reccount.ftlcount ++;
 			                }else if(reccount.ftlcount == 1){
-						    	ri.CHECKTIME = penalty(ri.EndTime,30)
-						    	reconcileblanklog(ri)
+						    	ri.CHECKTIME = penalty(ri.EndTime,-30)
+						    	reconcileblanklog(rec,ri)
 						    	reccount.ftlcount ++;
 			                }else if(reccount.ftlcount == 2){
-						    	ri.CHECKTIME = penalty(ri.EndTime,60)
-						    	reconcileblanklog(ri)
+						    	ri.CHECKTIME = penalty(ri.EndTime,-60)
+						    	reconcileblanklog(rec,ri)
 						    	reccount.ftlcount ++;
 			                }
 		            	}
@@ -177,14 +214,14 @@ class BTACSReconciliationService {
 		            default:
 		            	def lc = em.findLeaveClass([leavename:ri.reason])
 		            	if(lc){
-		            		reconcileleaveclass(ri,lc)
+		            		reconcileleaveclass(rec,ri,lc)
 		            	}
 		            	// throw new Exception("Data may have changed for BRN:" + ri.brn + " please recreate the transaction"); 
 		            break;
 					}
 			}
     	}
-			
+		emrec.create(rec);	
 		return "OK";
 
     }
@@ -200,33 +237,63 @@ class BTACSReconciliationService {
     	// } 
     }
 
-    private def reconcileblanklog(ri){
+    private void reconcileblanklog(rec,ri){
     	def cio = [
-    		USERID : ri.userid,
-    		CHECKTIME : ri.CHECKTIME,
-    		CHECKTYPE : ri.CHECKTYPE,
-    		VERIFYCODE : 0,
-    		SENSORID : null,
-    		Memoinfo : "SYSTEM " + ri.reason,
-    		WorkCode : 0,
-    		sn : null,
-    		UserExtFmt:null,
+			USERID    : ri.userid,
+			CHECKTIME : ri.CHECKTIME,
+			CHECKTYPE : ri.CHECKTYPE,
+			VERIFYCODE: 0,
+			SENSORID  : null,
+			Memoinfo  : "SYSTEM " + ri.reason,
+			WorkCode  : 0,
+			sn        : null,
+			UserExtFmt: null,
+			BRN       : ri.brn,
     	]
-    	
+
+    	createrecitem(rec,ri);
     	emcio.create(cio);
     }
 
-    private def reconcileleaveclass(ri,lc){
+    private void reconcileleaveclass(rec,ri,lc){
     	def cio = [
-    		USERID : ri.userid,
-    		STARTSPECDAY : ri.StartTime,
-    		ENDSPECDAY : ri.EndTime,
-    		DATEID : lc.LeaveId,
-    		YUANYING : lc.LeaveName,
-    		DATE : dtsvc.getServerDate(),
+			USERID      : ri.userid,
+			STARTSPECDAY: ri.StartTime,
+			ENDSPECDAY  : ri.EndTime,
+			DATEID      : lc.LeaveId,
+			YUANYING    : lc.LeaveName,
+			DATE        : dtsvc.getServerDate(),
+			BRN         : ri.brn,
     	]
-    	println cio
+    	createrecitem(rec,ri);
     	ems.create(cio);
+    }
+
+    private void createrecitem(rec,ri){
+    	def reci = [
+			objid           : "RECI"+ new UID(),
+			state           : 'DRAFT',
+			reconciliationid: rec.objid,
+			brn             : ri.brn,
+			userid          : ri.userid,
+			name            : ri.name,
+			gender          : ri.gender,
+			jobtitle        : ri.jobtitle,
+			datestart       : ri.datestart,
+			dateend         : ri.dateend,
+			TimeStartLogin  : ri.TimeStartLogin,
+			StartTime       : ri.StartTime,
+			TimeEndLogin    : ri.TimeEndLogin,
+			EndTime         : ri.EndTime,
+			TimeStartLogout : ri.TimeStartLogout,
+			TimeEndLogout   : ri.TimeEndLogout,
+			DateLogin       : ri.DateLogin,
+			DateLogout      : ri.DateLogout,
+			EARLYOUT        : ri.EARLYOUT,
+			UNDERTIME       : ri.UNDERTIME,
+			reason          : ri.reason,
+    	]
+    	emreci.create(reci);
     }
 
     private def penalty(o,p){

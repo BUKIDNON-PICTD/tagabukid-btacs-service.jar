@@ -9,5 +9,7 @@
 		<field name="WorkCode" />
 		<field name="sn" />
 		<field name="UserExtFmt" />
+		<field name="BRN" />
+
 	</element>
 </schema>

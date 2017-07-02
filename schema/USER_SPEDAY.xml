@@ -6,5 +6,6 @@
 		<field name="DATEID" required="true"/>
 		<field name="YUANYING" />
 		<field name="DATE" />
+		<field name="BRN" />
 	</element>
 </schema>

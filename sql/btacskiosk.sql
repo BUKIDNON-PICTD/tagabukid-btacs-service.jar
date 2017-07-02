@@ -22,7 +22,10 @@ SELECT *,NAME + ':' + [POSITION] AS x FROM Signatory ORDER BY NAME
 [getReconciliationItems]
 SET DATEFIRST 1
 SELECT * FROM dbo.GetDTRReconciliationItem($P{selectedmonth},$P{currentyear},$P{userid}) 
-WHERE (DateLogin IS NULL OR DateLogout IS NULL) AND UNDERTIME > 0 AND StartTime < CAST(CAST(GETDATE() AS DATE) AS DATETIME);
+WHERE (DateLogin IS NULL OR DateLogout IS NULL) 
+AND UNDERTIME > 0 
+AND StartTime < CAST(CAST(GETDATE() AS DATE) AS DATETIME)
+AND EARLYOUT IS NULL;
 
 [getLeaveClass]
 SELECT * FROM LeaveClass WHERE STATE = 'APPROVED';

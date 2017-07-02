@@ -1,0 +1,17 @@
+<schema>
+	<element name="btacsreconciliation" tablename="btacs_reconciliation">
+		<field name="objid" primary="true"/>
+		<field name="state" required="true"/>
+		<field name="txnno" required="true"/>
+		<field name="officeid" required="true"/>
+		<field name="officename" required="true"/>
+		<field name="year" required="true"/>
+		<field name="month" required="true"/>
+		<field name="recordlog_datecreated" required="true"/>
+		<field name="recordlog_createdbyuserid" required="true"/>
+		<field name="recordlog_createdbyuser" required="true"/>
+		<field name="recordlog_dateoflastupdate" />
+		<field name="recordlog_lastupdatedbyuserid" />
+		<field name="recordlog_lastupdatedbyuser" />
+	</element>
+</schema>
