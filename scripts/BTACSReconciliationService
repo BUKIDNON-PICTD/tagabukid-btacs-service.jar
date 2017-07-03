@@ -140,38 +140,44 @@ class BTACSReconciliationService {
 		            case "CHIEF LOGS":
 		               	if(!ri.DateLogin){
 				    		ri.CHECKTIME = ri.StartTime
+				    		
 				    		ri.CHECKTYPE = "I"
 				    		reconcileblanklog(rec,ri)
 				    	}
 
 				    	if(!ri.DateLogout){
 				    		ri.CHECKTIME = ri.EndTime
+				    		
 				    		ri.CHECKTYPE = "O"
 				    		reconcileblanklog(rec,ri)
 				    	}
 		            break;
 		            case "BROWNOUT":
-		                if(!ri.DateLogin){
+		               if(!ri.DateLogin){
 				    		ri.CHECKTIME = ri.StartTime
+				    		
 				    		ri.CHECKTYPE = "I"
 				    		reconcileblanklog(rec,ri)
 				    	}
 
 				    	if(!ri.DateLogout){
 				    		ri.CHECKTIME = ri.EndTime
+				    		
 				    		ri.CHECKTYPE = "O"
 				    		reconcileblanklog(rec,ri)
 				    	}
 		            break;
 		            case "CONVOCATION":
-		                if(!ri.DateLogin){
+		               if(!ri.DateLogin){
 				    		ri.CHECKTIME = ri.StartTime
+				    		
 				    		ri.CHECKTYPE = "I"
 				    		reconcileblanklog(rec,ri)
 				    	}
 
 				    	if(!ri.DateLogout){
 				    		ri.CHECKTIME = ri.EndTime
+				    		
 				    		ri.CHECKTYPE = "O"
 				    		reconcileblanklog(rec,ri)
 				    	}
@@ -181,14 +187,17 @@ class BTACSReconciliationService {
 		            		ri.CHECKTYPE = "I"
 		            		if (reccount.ftlcount == 0){
 						    	ri.CHECKTIME = ri.StartTime
+						    	
 						    	reconcileblanklog(rec,ri)
 						    	reccount.ftlcount ++;
 			                }else if(reccount.ftlcount == 1){
 						    	ri.CHECKTIME = penalty(ri.StartTime,30)
+						    	
 						    	reconcileblanklog(rec,ri)
 						    	reccount.ftlcount ++;
 			                }else if(reccount.ftlcount == 2){
 						    	ri.CHECKTIME = penalty(ri.StartTime,60)
+						    	
 						    	reconcileblanklog(rec,ri)
 						    	reccount.ftlcount ++;
 			                }
@@ -197,14 +206,17 @@ class BTACSReconciliationService {
 		            		ri.CHECKTYPE = "O"
 		            		if (reccount.ftlcount == 0){
 						    	ri.CHECKTIME = ri.EndTime
+						    	
 						    	reconcileblanklog(rec,ri)
 						    	reccount.ftlcount ++;
 			                }else if(reccount.ftlcount == 1){
 						    	ri.CHECKTIME = penalty(ri.EndTime,-30)
+						    	
 						    	reconcileblanklog(rec,ri)
 						    	reccount.ftlcount ++;
 			                }else if(reccount.ftlcount == 2){
 						    	ri.CHECKTIME = penalty(ri.EndTime,-60)
+
 						    	reconcileblanklog(rec,ri)
 						    	reccount.ftlcount ++;
 			                }
@@ -289,6 +301,7 @@ class BTACSReconciliationService {
 			TimeEndLogout   : ri.TimeEndLogout,
 			DateLogin       : ri.DateLogin,
 			DateLogout      : ri.DateLogout,
+			CHECKTIME		: ri.CHECKTIME,
 			EARLYOUT        : ri.EARLYOUT,
 			UNDERTIME       : ri.UNDERTIME,
 			reason          : ri.reason,
