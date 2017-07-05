@@ -1,11 +1,19 @@
-<schema>
+<schema adapter="btacs">
 	<element name="USER_SPEDAY" tablename="USER_SPEDAY">
 		<field name="USERID" primary="true"/>
-		<field name="STARTSPECDAY" required="true"/>
-		<field name="ENDSPECDAY" required="true"/>
+		<field name="STARTSPECDAY" required="true" caption="START DATE" indexed="true"/>
+		<field name="ENDSPECDAY" required="true" caption="END DATE" indexed="true"/>
 		<field name="DATEID" required="true"/>
-		<field name="YUANYING" />
+		<field name="YUANYING" caption="REMARKS"/>
 		<field name="DATE" />
 		<field name="BRN" />
+
+		<!-- <complex name="leave" ref="LeaveClass" jointype="many-to-one">
+			<key field="DATEID" target="LeaveId"/>
+		</complex>	
+
+		<complex name="user" ref="USERINFO" jointype="many-to-one">
+			<key field="USERID" target="USERID"/>
+		</complex>	 -->
 	</element>
 </schema>

@@ -1,0 +1,16 @@
+<schema adapter="btacs">
+	<element name="LeaveClass" tablename="LeaveClass">
+		<field name="LeaveId" primary="true" />
+		<field name="LeaveName" required="true" caption="Leave Name" searchable="true" indexed="true"/>
+		<field name="MinUnit" required="true" />
+		<field name="Unit" required="true" />
+		<field name="RemaindProc" required="true" />
+		<field name="RemaindCount" required="true" />
+		<field name="ReportSymbol" required="true" />
+		<field name="Deduct" required="true" />
+		<field name="Color" required="true" />
+		<field name="Classify" required="true" />
+		<field name="AttachmentRequired" required="true" />
+		<field name="STATE" required="true" />
+	</element>
+</schema>

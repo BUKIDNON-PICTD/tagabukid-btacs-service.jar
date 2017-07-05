@@ -1,0 +1,49 @@
+import com.rameses.annotations.*;
+import com.rameses.common.*;
+import com.rameses.services.extended.*;
+import java.text.DecimalFormat;
+
+
+class BTACSCHECKINOUTService extends ActiveCrudListService
+{
+
+	@ActiveDB(value='CHECKINOUT', em='btacs')
+	def em
+
+	void beforeList(params){
+		if (params == null) params = [:]
+		params.searchtext = (params.searchtext ? params.searchtext :'')+'%'
+	}
+
+
+	@ProxyMethod
+	public def getColumns( params ) {
+		return [
+			[name:"BRN", caption:"BRN", width:40],
+			[name:"NAME", caption:"Name", width:40],
+            [name:"GENDER", caption:"Gender", width:40],
+            [name:"TITLE", caption:"Title", width:100],
+            [name:"Department", caption:"Department", width:100],
+            [name:"CHECKTIME", caption:"Check Time", width:40],
+            [name:"CHECKTYPE", caption:"Check Type", width:50],
+            [name:"Memoinfo", caption:"Remarks", width:50],
+            
+		]	
+	}
+// user.NAME,user.GENDER,user.TITLE,user.department.DEPTNAME,CHECKTIME,CHECKTYPE,Memoinfo,BRN
+	
+	@ProxyMethod
+	public def getList( params ) {
+		beforeList(params)
+		return em.getList(params)
+		
+	} 
+
+	@ProxyMethod
+	public def removeLog( params ) {
+
+		return em.removeLog(params)
+		
+	} 
+
+}

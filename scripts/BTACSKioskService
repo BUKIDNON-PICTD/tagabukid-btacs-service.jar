@@ -14,7 +14,9 @@ class BTACSKioskService {
 	
 	@ProxyMethod
 	public def GetOfficeList () {
-		def officelist = em.getOfficeList()
+		def params = [:]
+		params.filter = ''
+		def officelist = em.getOfficeList(params)
 		return officelist; 
 	}
 

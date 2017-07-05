@@ -81,6 +81,7 @@ class BTACSReconciliationService {
 	public def getLeaveClass() {
 		def lc = em.getLeaveClass();
 		lc.add([LeaveName:"CHIEF LOGS"]);
+		lc.add([LeaveName:"OFFICE MEMO"]);
 		lc.add([LeaveName:"FORGOT TO LOG"]);
 		lc.add([LeaveName:"BROWNOUT"]);
 		lc.add([LeaveName:"CONVOCATION"]);
@@ -108,6 +109,8 @@ class BTACSReconciliationService {
 	@Async
 	@ProxyMethod
     public def processReconciliation(entity,reconciliationitems){
+
+    	// println reconciliationitems;
     	def rec = [
 			objid                        : "REC"+ new UID(),
 			state                        : 'DRAFT',
@@ -123,7 +126,8 @@ class BTACSReconciliationService {
 			recordlog_lastupdatedbyuserid: env.USERID,
 			recordlog_lastupdatedbyuser  : env.FULLNAME,
     	];
-
+    	emrec.create(rec);
+    		
     	def grouprecitem = reconciliationitems.groupBy({[userid:it.userid,name:it.name,gender:it.gender,jobtitle:it.jobtitle]}).collect{k,v->
             [
 				userid  :k.userid,
@@ -138,6 +142,21 @@ class BTACSReconciliationService {
 			it.items.each{ri ->
 				switch(ri.reason){
 		            case "CHIEF LOGS":
+		               	if(!ri.DateLogin){
+				    		ri.CHECKTIME = ri.StartTime
+				    		
+				    		ri.CHECKTYPE = "I"
+				    		reconcileblanklog(rec,ri)
+				    	}
+
+				    	if(!ri.DateLogout){
+				    		ri.CHECKTIME = ri.EndTime
+				    		
+				    		ri.CHECKTYPE = "O"
+				    		reconcileblanklog(rec,ri)
+				    	}
+		            break;
+		            case "OFFICE MEMO":
 		               	if(!ri.DateLogin){
 				    		ri.CHECKTIME = ri.StartTime
 				    		
@@ -233,7 +252,7 @@ class BTACSReconciliationService {
 					}
 			}
     	}
-		emrec.create(rec);	
+	
 		return "OK";
 
     }
