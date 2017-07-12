@@ -6,7 +6,7 @@
 		<field name="DATEID" required="true"/>
 		<field name="YUANYING" caption="REMARKS"/>
 		<field name="DATE" />
-		<field name="BRN" />
+		<field name="BRN" searchable="true"/>
 
 		<!-- <complex name="leave" ref="LeaveClass" jointype="many-to-one">
 			<key field="DATEID" target="LeaveId"/>

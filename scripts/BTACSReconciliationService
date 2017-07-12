@@ -65,6 +65,8 @@ class BTACSReconciliationService {
 			        def time = new java.text.SimpleDateFormat("a");
 			        o.ampm = time.format(d)
 					o.duty = o.datestart.toString() + " - " + o.dateend.toString()
+					o.NewDateLogin = false
+					o.NewDateLogout = false
 					items.add(o)
 				}
 			//}
@@ -197,6 +199,19 @@ class BTACSReconciliationService {
 				    	if(!ri.DateLogout){
 				    		ri.CHECKTIME = ri.EndTime
 				    		
+				    		ri.CHECKTYPE = "O"
+				    		reconcileblanklog(rec,ri)
+				    	}
+		            break;
+		             case "OVERTIME":
+		               if(ri.NewDateLogin){
+				    		ri.CHECKTIME = ri.DateLogin
+				    		ri.CHECKTYPE = "I"
+				    		reconcileblanklog(rec,ri)
+				    	}
+
+				    	if(ri.NewDateLogout){
+				    		ri.CHECKTIME = ri.DateLogout
 				    		ri.CHECKTYPE = "O"
 				    		reconcileblanklog(rec,ri)
 				    	}

@@ -5,7 +5,8 @@ INNER JOIN DEPARTMENTS d ON d.DEPTID = u.DEFAULTDEPTID
 INNER JOIN LeaveClass l ON l.LeaveId = c.DATEID
 WHERE (u.NAME LIKE $P{searchtext}
 OR u.TITLE LIKE $P{searchtext}
-OR l.LeaveName LIKE $P{searchtext})
+OR l.LeaveName LIKE $P{searchtext}
+OR c.BRN LIKE $P{searchtext})
 AND c.STARTSPECDAY BETWEEN $P{dtfrom} AND $P{dtto}
 
 [removeLog]

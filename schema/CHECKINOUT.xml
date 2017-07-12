@@ -9,7 +9,7 @@
 		<field name="WorkCode" />
 		<field name="sn" />
 		<field name="UserExtFmt" />
-		<field name="BRN" />
+		<field name="BRN" searchable="true"/>
 
 		<!-- <complex name="user" ref="USERINFO" jointype="many-to-one">
 			<key field="USERID" target="USERID"/>
