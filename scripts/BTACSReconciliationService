@@ -82,11 +82,12 @@ class BTACSReconciliationService {
 	@ProxyMethod
 	public def getLeaveClass() {
 		def lc = em.getLeaveClass();
-		lc.add([LeaveName:"CHIEF LOGS"]);
-		lc.add([LeaveName:"OFFICE MEMO"]);
 		lc.add([LeaveName:"FORGOT TO LOG"]);
+		lc.add([LeaveName:"OFFICE MEMO"]);
+		lc.add([LeaveName:"CHIEF LOGS"]);
 		lc.add([LeaveName:"BROWNOUT"]);
 		lc.add([LeaveName:"CONVOCATION"]);
+		lc.add([LeaveName:"UNDERTIME"]);
 		return lc;
 		 
 	}
@@ -203,7 +204,20 @@ class BTACSReconciliationService {
 				    		reconcileblanklog(rec,ri)
 				    	}
 		            break;
-		             case "OVERTIME":
+		            case "OVERTIME":
+		               if(ri.NewDateLogin){
+				    		ri.CHECKTIME = ri.DateLogin
+				    		ri.CHECKTYPE = "I"
+				    		reconcileblanklog(rec,ri)
+				    	}
+
+				    	if(ri.NewDateLogout){
+				    		ri.CHECKTIME = ri.DateLogout
+				    		ri.CHECKTYPE = "O"
+				    		reconcileblanklog(rec,ri)
+				    	}
+		            break;
+		            case "UNDERTIME":
 		               if(ri.NewDateLogin){
 				    		ri.CHECKTIME = ri.DateLogin
 				    		ri.CHECKTYPE = "I"
@@ -344,6 +358,15 @@ class BTACSReconciliationService {
     }
 
     private def penalty(o,p){
+    	def f = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+        Date d = f.parse(o.toString());
+        use(TimeCategory ) {
+		    d = d + p.minutes
+		}
+        return new java.sql.Timestamp( d.time);
+    }
+
+    private def validate(o,p){
     	def f = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
         Date d = f.parse(o.toString());
         use(TimeCategory ) {
