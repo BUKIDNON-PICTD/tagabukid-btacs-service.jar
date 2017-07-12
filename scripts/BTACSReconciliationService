@@ -1,0 +1,381 @@
+import com.rameses.annotations.*;
+import com.rameses.util.*;
+import java.rmi.server.*;
+import com.rameses.common.*
+import com.rameses.services.extended.*
+import org.codehaus.groovy.runtime.TimeCategory
+
+class BTACSReconciliationService {
+
+	@ActiveDB(value='btacskiosk', em='btacs')
+	def em;
+
+	@ActiveDB(value='CHECKINOUT', em='btacs')
+	def emcio;
+
+	@ActiveDB(value='USER_SPEDAY', em='btacs')
+	def ems;
+
+	@ActiveDB(value='btacsreconciliation', em='tagabukid_etracs')
+	def emrec;
+
+	@ActiveDB(value='btacsreconciliationitems', em='tagabukid_etracs')
+	def emreci;
+
+	@Service("SequenceService")
+	def seqSvc;
+
+	@Service("DateService")
+    def dtsvc
+
+    @Env
+	def env;
+
+	@ProxyMethod
+	public def lookupBTACSOffice( params) {
+		if (! params) params = [:]
+		params.searchtext = (params.searchtext && params.searchtext.trim().length() > 0 ? params.searchtext : '') + '%'
+		
+		params.filter = ''' AND DEPTNAME LIKE $P{searchtext} '''
+		return em.getOfficeList(params)
+	}
+
+	@ProxyMethod
+	public def getReconciliationItems(params) {
+		def employees = em.getEmployeeList([deptid:params.office.DEPTID])
+		
+		params.currentyear = dtsvc.getServerYear();
+		params.selectedmonth = params.month.index
+		def items = []
+		employees.each{ x ->
+			params.userid = x.USERID;
+			def blanklogs = em.getReconciliationItems(params)
+			//if(item.size > 0){
+				blanklogs.each{ o ->
+					// println it
+					o.name = x.NAME
+					o.userid = x.USERID
+					o.gender = x.GENDER
+					o.jobtitle = x.TITLE
+					o.brn = createBRN()
+					// o.penalty = [:]
+					// o.reason = [:]
+					def f = new java.text.SimpleDateFormat("yyyy-MM-dd hh:mm:ss.S");
+			        Date d = f.parse(o.dateend.toString());
+			        def time = new java.text.SimpleDateFormat("a");
+			        o.ampm = time.format(d)
+					o.duty = o.datestart.toString() + " - " + o.dateend.toString()
+					o.NewDateLogin = false
+					o.NewDateLogout = false
+					items.add(o)
+				}
+			//}
+			
+			
+		}
+		// println items
+		return items;
+		 
+	}
+
+
+	@ProxyMethod
+	public def getLeaveClass() {
+		def lc = em.getLeaveClass();
+		lc.add([LeaveName:"FORGOT TO LOG"]);
+		lc.add([LeaveName:"OFFICE MEMO"]);
+		lc.add([LeaveName:"CHIEF LOGS"]);
+		lc.add([LeaveName:"BROWNOUT"]);
+		lc.add([LeaveName:"CONVOCATION"]);
+		lc.add([LeaveName:"UNDERTIME"]);
+		return lc;
+		 
+	}
+
+	@ProxyMethod
+	public def getPenaltyList() {
+		return em.getPenaltyList();
+		 
+	}
+
+	public def createBRN(def o) {
+		def appcode = "BRN"
+		return appcode+seqSvc.getNextFormattedSeries(appcode);
+	}
+
+	public def createRECN(def o) {
+		def appcode = "REC"
+		return appcode+seqSvc.getNextFormattedSeries(appcode);
+	}
+
+
+	@Async
+	@ProxyMethod
+    public def processReconciliation(entity,reconciliationitems){
+
+    	// println reconciliationitems;
+    	def rec = [
+			objid                        : "REC"+ new UID(),
+			state                        : 'DRAFT',
+			txnno                        : createRECN(),
+			officeid                     : entity.office.DEPTID,
+			officename                   : entity.office.DEPTNAME,
+			year                         : entity.year,
+			month                        : entity.month.index,
+			recordlog_datecreated        : dtsvc.serverDate,
+			recordlog_createdbyuserid    : env.USERID,
+			recordlog_createdbyuser      : env.FULLNAME,
+			recordlog_dateoflastupdate   : dtsvc.serverDate,
+			recordlog_lastupdatedbyuserid: env.USERID,
+			recordlog_lastupdatedbyuser  : env.FULLNAME,
+    	];
+    	emrec.create(rec);
+    		
+    	def grouprecitem = reconciliationitems.groupBy({[userid:it.userid,name:it.name,gender:it.gender,jobtitle:it.jobtitle]}).collect{k,v->
+            [
+				userid  :k.userid,
+				name    :k.name,
+				gender  :k.gender,
+				jobtitle:k.jobtitle,
+				items   :v
+            ]
+        }
+    	grouprecitem.each{
+    		def reccount = em.findReconciliationCount([USERID:it.userid,YEAR:entity.year,MONTH:entity.month.index])
+			it.items.each{ri ->
+				switch(ri.reason){
+		            case "CHIEF LOGS":
+		               	if(!ri.DateLogin){
+				    		ri.CHECKTIME = ri.StartTime
+				    		
+				    		ri.CHECKTYPE = "I"
+				    		reconcileblanklog(rec,ri)
+				    	}
+
+				    	if(!ri.DateLogout){
+				    		ri.CHECKTIME = ri.EndTime
+				    		
+				    		ri.CHECKTYPE = "O"
+				    		reconcileblanklog(rec,ri)
+				    	}
+		            break;
+		            case "OFFICE MEMO":
+		               	if(!ri.DateLogin){
+				    		ri.CHECKTIME = ri.StartTime
+				    		
+				    		ri.CHECKTYPE = "I"
+				    		reconcileblanklog(rec,ri)
+				    	}
+
+				    	if(!ri.DateLogout){
+				    		ri.CHECKTIME = ri.EndTime
+				    		
+				    		ri.CHECKTYPE = "O"
+				    		reconcileblanklog(rec,ri)
+				    	}
+		            break;
+		            case "BROWNOUT":
+		               if(!ri.DateLogin){
+				    		ri.CHECKTIME = ri.StartTime
+				    		
+				    		ri.CHECKTYPE = "I"
+				    		reconcileblanklog(rec,ri)
+				    	}
+
+				    	if(!ri.DateLogout){
+				    		ri.CHECKTIME = ri.EndTime
+				    		
+				    		ri.CHECKTYPE = "O"
+				    		reconcileblanklog(rec,ri)
+				    	}
+		            break;
+		            case "CONVOCATION":
+		               if(!ri.DateLogin){
+				    		ri.CHECKTIME = ri.StartTime
+				    		
+				    		ri.CHECKTYPE = "I"
+				    		reconcileblanklog(rec,ri)
+				    	}
+
+				    	if(!ri.DateLogout){
+				    		ri.CHECKTIME = ri.EndTime
+				    		
+				    		ri.CHECKTYPE = "O"
+				    		reconcileblanklog(rec,ri)
+				    	}
+		            break;
+		            case "OVERTIME":
+		               if(ri.NewDateLogin){
+				    		ri.CHECKTIME = ri.DateLogin
+				    		ri.CHECKTYPE = "I"
+				    		reconcileblanklog(rec,ri)
+				    	}
+
+				    	if(ri.NewDateLogout){
+				    		ri.CHECKTIME = ri.DateLogout
+				    		ri.CHECKTYPE = "O"
+				    		reconcileblanklog(rec,ri)
+				    	}
+		            break;
+		            case "UNDERTIME":
+		               if(ri.NewDateLogin){
+				    		ri.CHECKTIME = ri.DateLogin
+				    		ri.CHECKTYPE = "I"
+				    		reconcileblanklog(rec,ri)
+				    	}
+
+				    	if(ri.NewDateLogout){
+				    		ri.CHECKTIME = ri.DateLogout
+				    		ri.CHECKTYPE = "O"
+				    		reconcileblanklog(rec,ri)
+				    	}
+		            break;
+		            case "FORGOT TO LOG":
+		            	if (ri.DateLogin == null && reccount.ftlcount < 3){
+		            		ri.CHECKTYPE = "I"
+		            		if (reccount.ftlcount == 0){
+						    	ri.CHECKTIME = ri.StartTime
+						    	
+						    	reconcileblanklog(rec,ri)
+						    	reccount.ftlcount ++;
+			                }else if(reccount.ftlcount == 1){
+						    	ri.CHECKTIME = penalty(ri.StartTime,30)
+						    	
+						    	reconcileblanklog(rec,ri)
+						    	reccount.ftlcount ++;
+			                }else if(reccount.ftlcount == 2){
+						    	ri.CHECKTIME = penalty(ri.StartTime,60)
+						    	
+						    	reconcileblanklog(rec,ri)
+						    	reccount.ftlcount ++;
+			                }
+		            	}
+		            	if(ri.DateLogout == null && reccount.ftlcount < 3){
+		            		ri.CHECKTYPE = "O"
+		            		if (reccount.ftlcount == 0){
+						    	ri.CHECKTIME = ri.EndTime
+						    	
+						    	reconcileblanklog(rec,ri)
+						    	reccount.ftlcount ++;
+			                }else if(reccount.ftlcount == 1){
+						    	ri.CHECKTIME = penalty(ri.EndTime,-30)
+						    	
+						    	reconcileblanklog(rec,ri)
+						    	reccount.ftlcount ++;
+			                }else if(reccount.ftlcount == 2){
+						    	ri.CHECKTIME = penalty(ri.EndTime,-60)
+
+						    	reconcileblanklog(rec,ri)
+						    	reccount.ftlcount ++;
+			                }
+		            	}
+		                
+		            break;
+		            default:
+		            	def lc = em.findLeaveClass([leavename:ri.reason])
+		            	if(lc){
+		            		reconcileleaveclass(rec,ri,lc)
+		            	}
+		            	// throw new Exception("Data may have changed for BRN:" + ri.brn + " please recreate the transaction"); 
+		            break;
+					}
+			}
+    	}
+	
+		return "OK";
+
+    }
+
+    @ProxyMethod
+    void verifyitem(o,ri){
+    	if(!em.findReconciliationItem([MONTH:o.month.index,YEAR:o.year,USERID:ri.userid,DATESTART:ri.datestart,DATEEND:ri.dateend])){
+    		throw new Exception("Data may have changed for BRN:" + ri.brn + " please recreate the transaction"); 
+    	}
+
+    	// if(em.findReconciliationCount([MONTH:o.month.index,YEAR:o.year,USERID:ri.userid]).ftlcount > 3 && ri.reason == "FORGOT TO LOG"){
+    	// 	throw new Exception("FORGOT TO LOG count for BRN:" + ri.brn + "  is greater than 3. Reconciliation for this item is not allowed."); 
+    	// } 
+    }
+
+    private void reconcileblanklog(rec,ri){
+    	def cio = [
+			USERID    : ri.userid,
+			CHECKTIME : ri.CHECKTIME,
+			CHECKTYPE : ri.CHECKTYPE,
+			VERIFYCODE: 0,
+			SENSORID  : null,
+			Memoinfo  : "SYSTEM " + ri.reason,
+			WorkCode  : 0,
+			sn        : null,
+			UserExtFmt: null,
+			BRN       : ri.brn,
+    	]
+
+    	createrecitem(rec,ri);
+    	emcio.create(cio);
+    }
+
+    private void reconcileleaveclass(rec,ri,lc){
+    	def cio = [
+			USERID      : ri.userid,
+			STARTSPECDAY: ri.StartTime,
+			ENDSPECDAY  : ri.EndTime,
+			DATEID      : lc.LeaveId,
+			YUANYING    : lc.LeaveName,
+			DATE        : dtsvc.getServerDate(),
+			BRN         : ri.brn,
+    	]
+    	createrecitem(rec,ri);
+    	ems.create(cio);
+    }
+
+    private void createrecitem(rec,ri){
+    	def reci = [
+			objid           : "RECI"+ new UID(),
+			state           : 'DRAFT',
+			reconciliationid: rec.objid,
+			brn             : ri.brn,
+			userid          : ri.userid,
+			name            : ri.name,
+			gender          : ri.gender,
+			jobtitle        : ri.jobtitle,
+			datestart       : ri.datestart,
+			dateend         : ri.dateend,
+			TimeStartLogin  : ri.TimeStartLogin,
+			StartTime       : ri.StartTime,
+			TimeEndLogin    : ri.TimeEndLogin,
+			EndTime         : ri.EndTime,
+			TimeStartLogout : ri.TimeStartLogout,
+			TimeEndLogout   : ri.TimeEndLogout,
+			DateLogin       : ri.DateLogin,
+			DateLogout      : ri.DateLogout,
+			CHECKTIME		: ri.CHECKTIME,
+			EARLYOUT        : ri.EARLYOUT,
+			UNDERTIME       : ri.UNDERTIME,
+			reason          : ri.reason,
+    	]
+    	emreci.create(reci);
+    }
+
+    private def penalty(o,p){
+    	def f = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+        Date d = f.parse(o.toString());
+        use(TimeCategory ) {
+		    d = d + p.minutes
+		}
+        return new java.sql.Timestamp( d.time);
+    }
+
+    private def validate(o,p){
+    	def f = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+        Date d = f.parse(o.toString());
+        use(TimeCategory ) {
+		    d = d + p.minutes
+		}
+        return new java.sql.Timestamp( d.time);
+    }
+
+    
+
+
+}

@@ -1,0 +1,23 @@
+<schema adapter="btacs">
+	<element name="DEPARTMENTS" tablename="DEPARTMENTS">
+		<field name="DEPTID" primary="true"/>
+		<field name="DEPTNAME" requried="true" caption="DEPTNAME" searchable="true" indexed="true" type="date"/>
+		<field name="SUPDEPTID" requried="true" caption="SUPDEPTID" />
+		<field name="InheritParentSch" requried="true" caption="InheritParentSch" />
+		<field name="InheritDeptSch" requried="true" caption="InheritDeptSch" />
+		<field name="InheritDeptSchClass" requried="true" caption="InheritDeptSchClass" />
+		<field name="AutoSchPlan" requried="true" caption="AutoSchPlan" />
+		<field name="InLate" requried="true" caption="InLate" />
+		<field name="OutEarly" requried="true" caption="OutEarly" />
+		<field name="InheritDeptRule" requried="true" caption="InheritDeptRule" />
+		<field name="MinAutoSchInterval" requried="true" caption="MinAutoSchInterval" />
+		<field name="RegisterOT" requried="true" caption="RegisterOT" />
+		<field name="DefaultSchId" requried="true" caption="DefaultSchId" />
+		<field name="ATT" requried="true" caption="ATT" />
+		<field name="Holiday" requried="true" caption="Holiday" />
+		<field name="OverTime" requried="true" caption="OverTime" />
+		<field name="ROLE" requried="true" caption="ROLE" />
+		
+
+	</element>
+</schema>

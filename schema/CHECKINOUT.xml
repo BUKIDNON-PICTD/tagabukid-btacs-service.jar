@@ -1,0 +1,19 @@
+<schema adapter="btacs">
+	<element name="CHECKINOUT" tablename="CHECKINOUT">
+		<field name="USERID" primary="true"/>
+		<field name="CHECKTIME" caption="CHECKTIME" required="true" searchable="true" indexed="true"/>
+		<field name="CHECKTYPE" caption="CHECKTYPE" required="true"/>
+		<field name="VERIFYCODE" required="true"/>
+		<field name="SENSORID" />
+		<field name="Memoinfo" caption="REMARKS" searchable="true" indexed="true"/>
+		<field name="WorkCode" />
+		<field name="sn" />
+		<field name="UserExtFmt" />
+		<field name="BRN" searchable="true"/>
+
+		<!-- <complex name="user" ref="USERINFO" jointype="many-to-one">
+			<key field="USERID" target="USERID"/>
+		</complex>	 -->
+
+	</element>
+</schema>

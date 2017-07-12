@@ -1,0 +1,26 @@
+<schema adapter="tagabukid_etracs">
+	<element name="btacsreconciliationitems" tablename="btacs_reconciliation_items">
+		<field name="objid" primary="true" />
+		<field name="state" required="true" caption="State"/>
+		<field name="reconciliationid" required="true" visible="false"/>
+		<field name="brn" required="true" caption="BRN" searchable="true" />
+		<field name="userid" required="true" visible="false"/>
+		<field name="name" required="true" caption="Employee Name" searchable="true" />
+		<field name="datestart" required="true" caption="Duty Start"/>
+		<field name="dateend" required="true" caption="Duty End"/>
+		<field name="TimeStartLogin" required="true" visible="false"/>
+		<field name="StartTime" required="true" visible="false"/>
+		<field name="TimeEndLogin" required="true" visible="false"/>
+		<field name="EndTime" required="true" visible="false"/>
+		<field name="TimeStartLogout" required="true" visible="false"/>
+		<field name="TimeEndLogout" required="true" visible="false"/>
+		<field name="DateLogin" caption="IN" visible="false"/>
+		<field name="DateLogout" caption="OUT" visible="false"/>
+		<field name="CHECKTIME" caption="CHECKTIME"/>
+		<field name="EARLYOUT" visible="false" caption="CHECKTIME"/>
+		<field name="UNDERTIME" visible="false"/>
+		<field name="reason" caption="Reason" searchable="true"/>
+	</element>
+</schema>
+
+
