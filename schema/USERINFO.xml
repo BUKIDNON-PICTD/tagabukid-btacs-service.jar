@@ -1,6 +1,6 @@
 <schema adapter="btacs">
 	<element name="USERINFO" tablename="USERINFO">
-		<field name="USERID" required="true"/>
+		<field name="USERID" primary="true"/>
 		<field name="BADGENUMBER" required="true" caption="BADGENUMBER" searchable="false" visible="true" />
 		<field name="SSN" />
 		<field name="NAME" />
