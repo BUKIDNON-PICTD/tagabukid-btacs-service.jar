@@ -1,5 +1,67 @@
 <schema adapter="btacs">
 	<element name="USERINFO" tablename="USERINFO">
+		<field name="USERID" required="true"/>
+		<field name="BADGENUMBER" required="true" caption="BADGENUMBER" searchable="false" visible="true" />
+		<field name="SSN" />
+		<field name="NAME" />
+		<field name="GENDER" />
+		<field name="TITLE" />
+		<field name="PAGER" />
+		<field name="BIRTHDAY" />
+		<field name="HIREDDAY" />
+		<field name="STREET" />
+		<field name="CITY" />
+		<field name="STATE" />
+		<field name="ZIP" />
+		<field name="OPHONE" />
+		<field name="FPHONE" />
+		<field name="VERIFICATIONMETHOD" />
+		<field name="DEFAULTDEPTID" />
+		<field name="SECURITYFLAGS" />
+		<field name="ATT" />
+		<field name="INLATE" />
+		<field name="OUTEARLY" />
+		<field name="OVERTIME" />
+		<field name="SEP" />
+		<field name="HOLIDAY" />
+		<field name="MINZU" />
+		<field name="PASSWORD" />
+		<field name="LUNCHDURATION" />
+		<field name="MVerifyPass" />
+		<field name="PHOTO" />
+		<field name="Notes" />
+		<field name="privilege" />
+		<field name="InheritDeptSch" />
+		<field name="InheritDeptSchClass" />
+		<field name="AutoSchPlan" />
+		<field name="MinAutoSchInterval" />
+		<field name="RegisterOT" />
+		<field name="InheritDeptRule" />
+		<field name="EMPRIVILEGE" />
+		<field name="CardNo" />
+		<field name="Pin1" />
+		<field name="FaceGroup" />
+		<field name="AccGroup" />
+		<field name="UseAccGroupTZ" />
+		<field name="VerifyCode" />
+		<field name="Expires" />
+		<field name="ValidCount" />
+		<field name="ValidTimeBegin" />
+		<field name="ValidTimeEnd" />
+		<field name="TimeZone1" />
+		<field name="TimeZone2" />
+		<field name="TimeZone3" />
+		<field name="hrmisid" />
+		<field name="lname" />
+		<field name="fname" />
+		<field name="mname" />
+		<field name="pdsid" />
+	</element>
+</schema>
+
+
+<!-- <schema adapter="btacs">
+	<element name="USERINFO" tablename="USERINFO">
 		<field name="USERID" primary="true" />
 		<field name="BADGENUMBER" required="true" caption="BADGENUMBER" searchable="false" visible="true" />
 		<field name="SSN" required="true" caption="SSN" searchable="false" visible="true" />
@@ -52,7 +114,7 @@
 		<field name="TimeZone2" required="true" caption="TimeZone2" searchable="false" visible="true" />
 		<field name="TimeZone3" required="true" caption="TimeZone3" searchable="false" visible="true" />
 		<field name="TimeZone3" required="true" caption="TimeZone3" searchable="false" visible="true" />
-<!-- 
+
 		<complex name="department" ref="DEPARTMENTS" jointype="many-to-one">
 			<key field="DEFAULTDEPTID" target="DEPTID"/>
 		</complex>	
@@ -60,9 +122,9 @@
 		<complex name="items" ref="CHECKINOUT" jointype="one-to-many" lazy="true">
 			<key field="USERID" target="USERID"/>
 		</complex>	
- -->
+
 	</element>
 </schema>
-
+ -->
 
 
